@@ -1,0 +1,76 @@
+Sequenza di chiamate progetto ing software:
+readline(), classe Client
+codifica(..), classe CodificaClient
+handleCommand(), classe CommandHandler
+In base ai valori della stringa passata da client a server attraverso RMI:
+spostamento(),
+rumoreAltroSettore(),etc. classe Controller
+Controller chiama i metodi dell'engine Gioco
+Da gioco ci si collega a tutto il model
+Il model manda stringhe alla classe Filter grazie al pattern Observer al metodo update(). NUOVA versione di grande scopa: chiama Filter senza observer!
+
+I metodi di Filter mandano messaggi alla classe Notifier di package Client, ma che fanno solamente da view, da stampa a schermo se noti! In realtà dopo aver visto
+rno.setStatoAttuale(che poi alla fine fa solo una printf oltre a cambiare lo stato), la computazione riparte dal metodo connect di readLine() in classe Client, e
+l'input è controllato da validInput() e la semantica l'utente la capisce in base alla printf dello stato precedente che ad esempio gli dice di inserire Y o N
+(nella grande scopa per setMadWoman il controllo va fatto in parte a livello del model perchè devo confrontare con madWomanRanks, ma qualcosa si può portare a livello
+superiore su Client). setStatoAttuale senza la funzione di view è comunque da tenere assolutamente perchè la prima riga fa la cosa più importante, il cambio di stato
+che fa da setter per lo stato!
+
+L'unico caso che non fa solamente da view client.setStatoAttuale è quando ho ENDSTATE e la stringa End. Al vecchio client viene detto "Hai finito il turno", poi viene
+chiamato handleCommand da lì e non dalla readline di Client! Da lì si passa a controller.end(), che chiama eseguiPartita() in Gioco. Gioco aggiorna playerTurnNumber,
+che è collegato 1:1 al notifier-client rno di Filter. rno viene aggiornato, i messaggi vengono mandati al nuovo client e non più al vecchio client. Quindi ha senso
+che è l'altro client che risponda alle domande schiacciando tasti che vengono presi dalla readLine.
+Ovviamente l'altro client può scrivere cose quando non è il suo turno ma ciò viene bloccato con un messaggio in codificaClient.
+
+E'da Filter che si aggiornano Stati attuali, ed è all'inizio del gioco che viene stabilito il numero di stanza.
+
+Penso sia meglio centralizzare il controllo dell'input avendo l'informazione sullo stato corrente a livello di readline piuttosto che farlo dopo nel model.
+Ma senza stati, come si potrebbe fare il controllo dell'input?
+
+Si può decidere di mettere la view su Filter con i vari notify message e announce oppure su setStatoAttuale in Client. Mischiare le due cose non va bene.
+Direi di lasciare la view su filter, a parte forse EndState.
+
+
+EFTAIOS di Degre: su package server handler, classe Server Listener, c'è readLine().
+
+10.5 è la versione del compilatore migliore da scaricare, compilatore di nome NoodleWeb (o Modeweb)
+WhitePaper, lì si trovano cose utili per grafica 3D.
+Blender è multipiattaforma ed è gratuito, meglio di altri a pagamento. E' in Python
+Unity è equivalente a Unreal Engine, ma per Unity serve Csharp, per Unreal Engine non serve
+programmare.
+Altri software come Blender sono Maya e Max. Blender quando mette fuori nuovi plugin corregge i bug, gli altri due no.
+Lasciare layer di Default, non mettere Max e Maya
+tasto destro per selezionare, sinistro è cursore.
+trasformazione locale vs globale. In basso a sinistra ho assi globali
+Con tab o edit mode in basso entro in edit mode, divisa in modalità vertice, facce, o un'altra.
+XYZ sta per i 3 assi
+X diverso da XX, ruoti su assi diversi.
+RXX10 è una rotazione di 10 gradi sul'asse locale (o globale?) sull asse x di 10 gradi.
+In modalità wireframe posso selezionare anche le facce posteriori, oppure lo posso fare con
+interfaccia ibrida, a destra delle 3 modalità nel meù in basso.
+Il menù in basso è quello della schermata attuale, quello in alto è un menu generale.
+Tasto annulla qual'è? Tasto A cos'era?
+Estrusione è cosa più frequente in linguaggi di grafica. SI fa con tasto E, mentre tenendo
+premuto più vertici e schiacciando fill (tasto F) riempio la figura (da punto creo una linea
+da linee creo poligoni volendo).
+Aggiungere frame per le animazioni: cursore su oggetto e premo I e si sceglie location o
+una delle altre.
+Poi mi posso mettere a 30 nella timeline in basso, diventa verde le coordinate in alto a
+destro e se mi sposto con la timeline l'animazione si sposta per raggiungere
+shift+A crea  uovo oggetto dove hai messo cursore, oppure con object-add aggiungi anche altre cose
+Con control seleziono più oggetti con una figura che ricopre più oggetti. Con tasto c
+fai la selezione a cerchio. selezione di più oggetti non ho capito come si fa cliccandoci sopra.
+tasto numerico 0 seleziona la telecamera che serve per il rendering.
+Texture è immagine bidimensionale avvolta in un oggetto 3d.
+Uv map è il tappeto di mucca di una mucca scuoiata.
+Coloro poi in 2d l uvMap e poi verrà riattaccata sull'oggetto 3d.
+Apro una seconda finestra con le 3righette piccole in alto a destra trascinandole (per richiuderla mi muovo nel verso opposto)
+Schiaccio tasto U con cursore su oggetto 3d per fare uv map.
+Load image è in basso a destra.
+DopeSheet è molto utile per fare le animazioni.
+
+In unreal engine c'è modalità blueprint o c++.
+Il blueprint può essere relativo al livello o ai singoli oggetti.
+Si legge da sinistra verso destra il blueprint, si collegano gli eventi come in macchine a stati finiti.
+
+

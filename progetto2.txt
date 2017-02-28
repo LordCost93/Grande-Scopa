@@ -1,0 +1,226 @@
+Per cucù che non si fa a Sputacchio non devo creare un nuovo NewHandClassicGame. Prenderò poi
+la sesta carta o la nona nell'ultima mano dell'array di carte in mano per far cucù
+
+Engine crea player e deck e fa partire il match
+Engine chiama startSputacchio da SputacchioEngine
+Finita la mano a Sputacchio, viene chiamata newHandSixCards()
+
+startClassicGame
+Chi ha vinto a cucù (settare il cucùWinner) gioca per primo
+Dì al giocatore che è il suo turno e chiedi quale carta giocare dalla mano
+Metto la carta dalla mano a cardPlayed
+CalculatePossibleMoves(cardPlayed). Se le mosse possibili sono più di una chiedo quale
+vuole fare al giocatore, altrimenti gioco subito la carta (chiamo subito playCard(Move)
+(In swing quando il cursore passa sulla carta nella mano (o clic col tasto destro) si apre
+il ventaglio di mosse possibili prima ancora di giocare la carta: per fare questo bisognerebbe
+fare un metodo seePossibleMoves, mentre per ora ho progettato un sistema dove il giocatore
+clicca la carta e la carta è giocata, non c'è modo di tornare indietro. Si può pensare a
+seepossibleMoves nella modalità facile e a playCard(Card) nella modalità media e a
+playCard(Move) direttamente nella modalità esperto.
+Quando gioco effettivamente la carta uso playCard(move), che prende cardPlayed e
+le altre carte facenti parte di move e le mette in PCG. Se move ha thirds o points diverso
+da 0 chiedo al giocatore quali carte mettere come scope nell'ordine voluto dal giocatore
+e poi metto le scope prima delle altre carte sul mazzo delle carte prese.
+(se ho nextCardAsScopa=0).
+
+Se ho più scope che carte prese cerco nelle carte sopra l'ultima scopa fatta, a meno che la
+mossa non sia un accuso chiamato, altrimenti salto subito al punto successivo.
+
+Se ho 5 scope e 3 carte prese e nessuna carta da prendere sopra l'ultima scopa fatta
+setto nextCardAsScopa a 2 (anzi, aumento di 2 il valore, perchè è possibile che ci siano scope
+in arretrato dalla presa precedente). La prossima presa avrà scope in più, e segnerò
+scope fino a quando nextCardAsScopa sarà a 0.
+
+ClassicGameEngine finisce quando entrambi i giocatori hanno 0 carte in mano (Jolly
+Personale alla fine dell'ultima mossa? Aspetto 3 secondi?)
+Ora ci concentriamo solo sulle prese del board
+
+Gioco una carta; calculatePossibleMoves verifica per prima cosa che:
+
+1)si è in regime di ribattuta (!prizeRibattuta.isEmpty)
+2)non si è in regime di ribattuta
+
+Nel caso 1), cioè siamo già in regime di ribattuta, invece:
+1.1)cardPlayed è una carta diversa da Asso,2,3
+Le carte in prizeRibattuta vengono date al giocatore che non sta giocando il turno ora
+e si riunisce il flusso in 2)
+1.2)cardPlayed è un A,2 o 3 o matta: si chiede al giocatore se intende ribattere:
+1.2.1)non intende ribattere; si riunisce il flusso in 2)
+1.2.2)vuole ribattere: si fa subito playCard(Move) aggiungendo la carta a prizeRibattuta
+e si passa il turno
+1.2.2.1)se vuole ribattere con la matta si mette di default il valore 2 o 3 senza chiederlo 
+al giocatore
+
+Si entra in regime di ribattuta quando si fa una presa (!moves.isEmpty) del tipo 2.2.1
+(a parte la 2.2.1.1) o del tipo 2.2.2 quando card played è un 2 o un 3
+Tutte le carte facenti parte di move vengono messe in un arrayList<Card> "prizeRibattuta"
+e si passa il turno.
+
+2.1)la carta è la matta: chiedo il valore da attribuirgli al giocatore e poi si riunisce
+il flusso al punto 2.2)
+2.2)se cardPlayed non è la matta salto subito alla prossima categoria:
+
+2.1)I valori attribuibili alla matta sono tutti tranne l'asso se non c'è nessuna carta sul tavolo,
+oppure verifico tutte le prese singole, le prese con somma di 2 carte, 3 carte, etc.
+Salvo i valori delle somme possibili in un array, e alla fine quelli saranno i valori possibili
+che il giocatore potrà attribuire alla matta. Per l'ultima mano dovrò contare anche le somme al
+15, ma è uguale poi.
+
+Poi verifico tre possibili prese:
+1)presa sul Board
+2)rubaMazzetto
+3)ruba Terzi Di punto
+
+Per non cambiare numerazione indichiamo i prossimi punti con 1)2.2), oppure 2.2)
+Quando parleremo di rubamazzetto e terzi di punto mettermo 2)2.2) e 3.2.2);
+Ora parliamo solo del board:
+Nel caso 2.2) si verifica che cardPlayed
+2.2.1)è un A
+2.2.2)nessuno di questi casi: procedimento di presa classico.
+
+Ora ampliamo i casi 2.2: Vediamo la 2.2.1:
+2.2.1.1)è un A con K nel board; si lascia sul tavolo anche se c'è già un A da prendere
+2.2.1.2)è un A e non ci sono A nel Board e non ci sono K nel Board: si piglia tutto
+e si entra in regime di ribattuta (anche se giù nel board non c'è niente)
+2.2.1.3)sempre A senza K nel board e si può fare un doppione A-A; in questo e 
+nei prossimi punti si entra in regime di ribattuta.Verifica Scopa+Doppione.
+2.2.1.4)sempre A senza K nel board e si può fare una presa singola A-A. Verifica Scopa
+2.2.1.5)sempre no K nel board e A di briscola: 2 di briscola nel board, presa con sforata
+e si entra in regime di ribattuta. Verifica Scopa
+2.2.1.6)sempre no K nel board e A di briscola: due A, uno di briscola nel board: presa
+con somma con sforata A+A=A. Verificare Scopa+Doppione.
+2.2.1.7)sempre no K nel board e A di briscola: Ap+2p=Ap, sforando di due valori su
+briscola picche. Verifica Scopa+Doppione.
+2.2.1.8)sempre no K nel board e A di briscola, senza 2 di briscola, nè A. Si piglia tutto
+contando i terzi di punto e si entra in regime di ribattuta
+
+Vediamo ora la 2.2.2:
+2.2.2.1)prese normali
+2.2.2.2)prese con sforata
+Prima di fare qualsiasi presa della 2.2.2.1 o 2.2.2.1 conto quante carte ci sono nel board
+e salvo questo valore in boardCardsNumber. Servirà poi per entrare o meno nei prossimi
+sotto punti. Se ho 4 carte nel board non verifico la somma di 5,6,7.. carte. Alternativa all'
+algoritmo di boardCardsNumber: ordino il board con carte in ordine crescente in base al
+rank, poi sommo dalla carta di minor valore fino all'ultima e ad ogni somma fatta avanzo
+un contatore di 1. Ad ogni somma verifico di non aver superato 13. Quando lo faccio mi fermo,
+e il valore del contatore mi dice la somma di carte massima da verificare. Se non arrivo
+oltre 13 e ho finito le carte nel board salvo comunque il valore, che sarà uguale alla vecchia
+verisone di boardCardsNumber. In caso di 0 carte nel board avrò solamente il valore del
+contatore inizializzato a 0 e non entrerò mai nel for/while.
+
+Per l'ultima mano basterà settare il valore a 14 (con l'A faccio 14+1=15 e prendo) e per le
+prese con sforata a 14 + BoardBriscolaCardsNumber. Poi oltre a questo bisognerà calcolare le
+prese a 15 normali e le prese a 15 con sforata, e per ognuno dividere in presa singola,
+somma di 2 carte, di 3 carte...
+
+Le somme di 7 carte danno solo per la quadriglia 35 scope. In caso di somma a 8 carte si
+potrebbe dare la vittoria (sarebbero 56 scope).
+
+Prese normali:
+2.2.2.1.1)verifico presa singola
+2.2.2.1.2)verifico presa con somma di 2 carte
+2.2.2.1.3)verifico presa con somma di 3 carte
+2.2.2.1.4)verifico presa con somma di 4 carte
+2.2.2.1.5)arrivo fino alla presa con 10 carte: caso estremo è 8 Assi sul tavolo e due 2, prendo
+con una Q.
+La 2.2.2.1.1 esclude la 2.2.2.1.2, così come quest'ultima esclude la 2.2.2.1.3 e così via
+a causa delle regole di precedenza a Scopa. Per le prese con sforata invece non ci sono
+regole di precedenza
+
+Prese con sforata: se la carta non è di briscola non verifico tutta questa parte
+2.2.2.2.1)verifico sforata singola
+2.2.2.2.2)verifico sforata con somma di 2 carte
+2.2.2.2.3)verifico sforata con somma di 3 carte
+2.2.2.2.4)verifico sforata con somma di 4 carte
+2.2.2.2.5)arrivo fino alla sforata con somma di 12 carte: caso estremo è 8 Assi sul tavolo, 
+due 2 di briscola e due 3 di briscola e prendo con K di briscola sforando di 6.
+
+Ampliamo le prese normali:
+2.2.2.1.1.1)doppione
+2.2.2.1.1.2)presa singola semplice
+2.2.2.1.1.3)scopa (+doppione)
+2.2.2.1.1.4)boardCardsNumber=0, non entro neanche nelle somme a più valori e avrò moves.
+isEmpty. Quando ho moves.isEmpty aggiungo la mossa automatica di poggiare la carta
+sul board. Poi controllo la possibilità di fare rubamazzetto o rubare i terzi di punto
+e se è possibile fare ciò non avrò moves.isEmpty con la sola alternativa di poggiare la
+carta e dovrò chiedere al giocatore cosa vuole fare. Tutto questo però va fatto alla fine
+di tutto
+
+2.2.2.1.2)prendo la prima carta del board: la sommo con la seconda del board e provo a
+vedere se la somma delle 2 dà il valore di cardPlayed. Poi prendo la terza del board, la
+quarta, etc. fino a che arrivo a fine arraylist. Poi faccio la stessa cosa con la seconda
+del board, partendo stavolta dalla terza come primo tentativo, e così via quando arrivo
+all'ultima carta. Mi fermo quando la carta del ciclo esterno non ha successivo nell'arraylist
+di board
+
+2.2.2.1.3)uso tre contatori: uno sulla prima carta, uno sulla seconda e uno sulla terza carta
+del board. Scorro prima tutto il terzo, poi tutto il secondo con la quarta carta come
+prima scelta del terzo contatore; poi scorro tutto il primo con i successivi contatori tutti
+spostati di uno avanti e faccio scorrere il terzo contatore e così via.. è un triplo ciclo for
+con i contatori inizializzati a i=0, j=i+1, K=j+1.
+Mi fermo quando non posso inizializzare il terzo contatore, cioè quando il primo contatore
+sta sulla penultima carta
+
+2.2.2.1.4)generalizzo il caso precedente
+2.2.2.1.4.1)Bagari generalizzato: prendo CardPlayed e CardTaken: prendo due contatori come
+visto sopra e scorro le carte con 2 cicli for. Ogni volta che trovo un bagari da 2 aumento
+di 1 il contatore di scope per Bagari che sarà il valore di ritorno della funzione che
+calcola il Bagari
+
+2.2.2.1.4.2)Quadriglia generalizzata: il valore di ritorno della funzione che calcola le scope
+per Quadriglia sarà dato da un calcolo combinatorio basato solo sul numero di cardTaken, basta
+cercarlo su internet.
+
+2.2.2.1.4.3)Doppione generalizzato: controllare se cardPlayed è identica in seme e valore a
+una tra le cardTaken. Poi guardare come nell'algoritmo di Bagari se ci sono carte identiche
+tra le cardTaken
+
+2.2.2.1.4.4)Scopa: si guarda il numero di cardTaken e il numero di carte nel board. Se è
+uguale la funzione verificaScopa(int ScopeForDoppioni) torna un valore diverso da 0.
+Non è detto che torni 1 perchè se ScopePerDoppioni > 0 aggiungo 1 scopa di bonus per ogni
+doppione della presa.
+
+2.2.2.1.4.5)Si sommano così questi valori interi il cui risultato entra nel costruttore
+di Move.
+
+2.2.2.1.5)si fanno solo se ho boardCardsNumber alto.
+
+Prese con sforata: vale sempre il controllo di BoardCardsNumber per le somme a più carte. Non
+ci sono regole di precedenza e se c'è una somma a 2 valori, devo controllare anche quella a 
+3 valori e così via, aggiungendole tutte all'arrayList Moves.
+Oltre a BoardCardsNumber faccio un controllo sul numero di carte di briscola nel board, e lo
+salvo in BoardBriscolaCardsNumber. Non controllerò le sforate di 2 valori se ho solo una carta
+di briscola sul board ad esempio. Però ora BoardCardsNumber non è esatto!! Devo modificare il 
+calcolo, contando prima BoardBriscolaCardsNumber e aggiungere quel risultato al 13 usato
+nelle prese normali. Posso quindi chiamare SumCardLimit : int e SumCardBriscolaLimit : int, e
+quest'ultimo lo calcolo solo se cardPlayed è di Briscola e prima di calcolare le sforate.
+Se non ho briscole sul board non calcolo comunque questo intero.
+
+Alla fine di ogni presa conto le cardTaken del seme di briscola, sommo 1 al posto di guardare
+cardTaken che è sicuramente di Briscola, e questo valore entrerà a far parte di thirds
+nella creazione di Move. Ci sarà poi un algoritmo che aumenta il valore delle scope ogni
+3 thirds fino a che non rimane 0<=thirds<3 prima di creare Move.
+
+2.2.2.2.1)Sforata singola:verifico solo Scopa
+2.2.2.2.2)Sforata con somma di 2 carte: verifico Scopa+Doppione e Bagari
+2.2.2.2.3)Sforata con somma di 3 carte: verifico anche Quadriglia, tutto da qua in poi.
+Metto i tre contatori come in 2.2.2.1.3). Devo però verificare che almeno una tra le 3 carte
+dei 3 contatori sia del seme di briscola, se no scorro subito.
+Devo verificare il numero di carte di briscola puntate dai contatori e salvare questo valore
+nel ciclo come Corrective, un intero. Faccio la somme tra le carte puntate dai contatori
+e il risultato è valido se è compreso tra cardPlayed.getRank()-Corrective e
+cardPlayed.getRank()+Corrective e diverso da cardPlayed.getRank
+2.2.2.2.4)generalizzo come in 2.2.2.1.4 per le prese senza sforata
+
+Quando aggiungo le carde a cardTaken non le devo eliminare dal board. La add duplica gli
+oggetti o li sposta e basta? Poi quando chiamo playCard(Move) devo spostare le carte dal
+board a PCGained se c'è un'uguaglianza tra cardTaken e le carte nel board. Attento ai doppioni.
+
+Per la matta: gli si dà un rank qualsiasi nascosto dalla costante intera Madwoman, e ci vuole
+pure un booleano "madwoman". Quando si chiama un accuso si dà un valore alla matta diverso
+dalla costante, e non ci sarebbe modo di capire se è ancora la matta o no.
+Poi quando si gioca la matta sul board deve per forza fare una presa, potrà assumere solo
+certi valori, a meno che non ci sia niente sul board. Quando va messa in PCGained le si dà il
+valore Q per la ScalaGenerale e va messa nel suo slot se madwoman= true. Anche il Jolly avrà
+una costante per il rank ma non serve un booleano jolly.
+
